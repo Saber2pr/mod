@@ -10,6 +10,13 @@ a module style for js.
 
 # API
 
+```ts
+function mod<T>(creator: () => Promise<T>): Promise<T>
+function mod<T>(
+  creator: (join: (dep: string) => Promise<any>) => Promise<T>
+): Promise<T>
+```
+
 1. define a module:
 
 ```js

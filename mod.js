@@ -2,15 +2,14 @@
  * @Author: saber2pr
  * @Date: 2019-12-16 22:18:22
  * @Last Modified by: saber2pr
- * @Last Modified time: 2019-12-18 17:44:00
+ * @Last Modified time: 2019-12-19 12:55:36
  */
-const mod = (() => {
+var mod = (() => {
   // executor
-  const importScript = src => {
+  const callResource = src => {
     const script = document.createElement("script")
     script.src = src
     document.head.append(script)
-    return () => document.head.removeChild(script)
   }
 
   // cache
@@ -19,24 +18,26 @@ const mod = (() => {
   // context stack
   const stack = []
 
-  // return
-  const exports = module => module && stack.pop()(module)
-
-  // >>=
-  const require = (dep, callback) => {
-    if (dep in cache) {
-      callback(cache[dep])
+  const system = (res, callback) => {
+    if (res in cache) {
+      callback(cache[res])
     } else {
-      importScript(dep)
-      stack.push(api => callback((cache[dep] = api)))
+      callResource(res)
+      stack.push(obj => {
+        callback((cache[res] = obj))
+        return obj
+      })
     }
   }
 
-  // monad
-  const mod = creator =>
-    Promise.resolve(
-      creator(dep => new Promise(resolve => require(dep, resolve)))
-    ).then(exports)
+  // return
+  const pure = module => (stack.pop() || (_ => _))(module)
 
-  return mod
+  // >>=
+  const join = dep => new Promise(resolve => system(dep, resolve))
+
+  // monad
+  const monad = creator => Promise.resolve(creator(join)).then(pure)
+
+  return monad
 })()
